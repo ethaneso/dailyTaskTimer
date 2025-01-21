@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Task Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f9;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #007acc;
+      color: white;
+      padding: 20px;
+      font-size: 24px;
+    }
+    .timer {
+      margin-top: 20px;
+    }
+    .clock {
+      font-size: 48px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .task-list {
+      margin-top: 30px;
+    }
+    .task-list ul {
+      list-style: none;
+      padding: 0;
+    }
+    .task-list li {
+      font-size: 18px;
+      margin: 10px 0;
+      padding: 5px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+    .task-list li.active {
+      background-color: #d1e7dd;
+      color: #0f5132;
+      font-weight: bold;
+    }
+    .customization {
+      margin-top: 20px;
+    }
+    .customization input {
+      padding: 5px;
+      font-size: 16px;
+    }
+    .customization button {
+      padding: 5px 10px;
+      font-size: 16px;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>Daily Task Timer</header>
+
+  <div class="clock" id="clock"></div>
+
+  <div class="task-list">
+    <h3>Today's Tasks</h3>
+    <ul id="task-list">
+      <li id="task-0">6:30 AM – Wake-Up and Energizer</li>
+      <li id="task-1">7:00 AM – Japanese Language Acquisition</li>
+      <li id="task-2">8:30 AM – Master's Research Paper</li>
+      <li id="task-3">9:30 AM – Work from Home</li>
+      <li id="task-4">2:00 PM – Cybersecurity Knowledge Enhancement</li>
+      <li id="task-5">4:30 PM – Public Speaking Practice</li>
+      <li id="task-6">6:00 PM – Japanese Practice</li>
+      <li id="task-7">7:30 PM – Evening Review</li>
+    </ul>
+  </div>
+
+  <div class="customization">
+    <h4>Customize Tasks</h4>
+    <input type="text" id="new-task" placeholder="Add a new task">
+    <input type="time" id="task-time">
+    <input type="number" id="task-duration" placeholder="Duration (minutes)" min="1" value="30">
+    <button onclick="addTask()">Add Task</button>
+  </div>
+
+  <script>
+    const tasks = [
+      { time: "06:30", name: "Wake-Up and Energizer", duration: 30 },
+      { time: "07:00", name: "Japanese Language Acquisition", duration: 90 },
+      { time: "08:30", name: "Master's Research Paper", duration: 60 },
+      { time: "09:30", name: "Work from Home", duration: 270 },
+      { time: "14:00", name: "Cybersecurity Knowledge Enhancement", duration: 150 },
+      { time: "16:30", name: "Public Speaking Practice", duration: 90 },
+      { time: "18:00", name: "Japanese Practice", duration: 90 },
+      { time: "19:30", name: "Evening Review", duration: 30 }
+    ];
+
+    function updateClock() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+
+      document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+
+      checkTasks(now);
+      setTimeout(updateClock, 1000);
+    }
+
+    function getMinutesSinceMidnight(date) {
+      return date.getHours() * 60 + date.getMinutes();
+    }
+
+    function parseTimeToMinutes(timeStr) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      return hours * 60 + minutes;
+    }
+
+    function checkTasks(now) {
+      const currentMinutes = getMinutesSinceMidnight(now);
+
+      tasks.forEach((task, index) => {
+        const taskStartMinutes = parseTimeToMinutes(task.time);
+        const taskEndMinutes = taskStartMinutes + task.duration;
+        const taskElement = document.getElementById(`task-${index}`);
+
+        if (currentMinutes >= taskStartMinutes && currentMinutes < taskEndMinutes) {
+          // Task is currently active
+          if (!taskElement.classList.contains('active')) {
+            taskElement.classList.add('active');
+            // Only show alert when task starts
+            if (currentMinutes - taskStartMinutes < 1) {
+              alert(`Task Starting: ${task.name}`);
+              playAlarm();
+              setTimeout(stopAlarm, 3000); // Stop alarm after 3 seconds
+            }
+          }
+        } else {
+          // Task is not active
+          taskElement.classList.remove('active');
+        }
+      });
+    }
+
+    function playAlarm() {
+      const alarm = new Audio('https://www.soundjay.com/button/beep-07.wav');
+      alarm.play();
+      window.currentAlarm = alarm;
+    }
+
+    function stopAlarm() {
+      if (window.currentAlarm) {
+        window.currentAlarm.pause();
+        window.currentAlarm = null;
+      }
+    }
+
+    function addTask() {
+      const taskName = document.getElementById('new-task').value;
+      const taskTime = document.getElementById('task-time').value;
+      const taskDuration = parseInt(document.getElementById('task-duration').value) || 30;
+
+      if (taskName && taskTime) {
+        const taskList = document.getElementById('task-list');
+        const li = document.createElement('li');
+        const newTaskIndex = tasks.length;
+        li.textContent = `${taskTime} – ${taskName}`;
+        li.id = `task-${newTaskIndex}`;
+        taskList.appendChild(li);
+        tasks.push({ time: taskTime, name: taskName, duration: taskDuration });
+        
+        // Clear input fields
+        document.getElementById('new-task').value = '';
+        document.getElementById('task-time').value = '';
+        document.getElementById('task-duration').value = '30';
+      }
+    }
+
+    updateClock(); // Initialize the clock
+  </script>
+</body>
+</html>
